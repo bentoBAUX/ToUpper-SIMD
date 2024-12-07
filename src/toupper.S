@@ -9,25 +9,26 @@
 .section .text
 
 toupper_simd:
-    movdqa xmm5, [rip + end_upper]      // Store end_upper
-    movdqa xmm7, [rip + diff]           // Store diff
+    movdqa xmm5, [rip + end_upper]                  // Store end_upper
+    movdqa xmm7, [rip + diff]                       // Store diff
     mov rcx, rdi                
     neg rcx
-    and rcx, 15                         // Handle first n unaligned characters
+    and rcx, 15                                     // Handle first n unaligned characters
     jz simd_loop
     
 sort_unaligned:
-    mov al,[rdi]
-    cmp al,0                        
-    je .Lend
-    sub al,'a'                      
-    cmp al,25                       
-    ja  unaligned_cont              
-    sub byte ptr [rdi],0x20         
+    mov al, [rdi]
+    cmp al, 'a'
+    jl  unaligned_cont
+    cmp al, 'z'
+    jg  unaligned_cont
+    and al, 0xDF
+    mov byte ptr [rdi], al      
 unaligned_cont:
     inc rdi
-    dec rcx
-    jnz sort_unaligned  
+    dec rcx 
+    jnz toupper_asm 
+    cmp byte ptr [rdi], 0x00
 
 simd_loop:
 
@@ -56,15 +57,16 @@ simd_loop:
     jmp simd_loop
 
 toupper_asm:
-    mov al,[rdi]
-    cmp al,0                    // Branch to return if char is '\0'
-    je .Lend
-    sub al,'a'                  // Make 'a' => 0, 'b' => 1, ..., 'z' => 25.
-    cmp al,25                   // Branch to cont if al is unsigned > 25.
-    ja .Lcont                   // "Jump above", unsigned equivalent to jg
-    sub byte ptr [rdi],0x20     // Transform letter to upper case
-.Lcont:
+    mov al, [rdi]
+    cmp al, 'a'
+    jl  next
+    cmp al, 'z'
+    jg  next
+    and al, 0xDF
+    mov byte ptr [rdi], al
+next:
     inc rdi
-    jmp toupper_asm
-.Lend:
+    cmp byte ptr [rdi], 0x00    
+    jnz toupper_asm 
+.end:
     ret
