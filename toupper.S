@@ -30,113 +30,251 @@ unaligned_cont:
     jnz sort_unaligned  
 
 simd_loop:
-    movaps xmm3, xmm5           
-    movaps xmm4, xmm7
-
-    movaps xmm0, xmmword ptr [rdi]
-    movaps xmm1, xmm0   
-
+    movaps xmm0, [rdi]
+    
     pxor xmm6, xmm6
     pcmpeqb xmm6, xmm0
-    pmovmskb eax, xmm6                              // Put MSBs into eax for testing
+    pmovmskb eax, xmm6
     test eax, eax
     jnz toupper_asm
 
-    pcmpgtb xmm1, xmmword ptr [rip + begin_lower]   // Get x >= a mask in xmm0
-    pcmpgtb xmm3, xmm0                              // Get z >= x mask in xmm3
+    movaps xmm3, xmm5
+    movaps xmm4, xmm7
+    movaps xmm1, xmm0
 
-    pand xmm1, xmm3                                 // Combine masks to find toupper() character
+    pcmpgtb xmm1, [rip + begin_lower]
+    pcmpgtb xmm3, xmm0
+    pand xmm1, xmm3
+    pand xmm4, xmm1
+    psubb xmm0, xmm4
+    movdqa [rdi], xmm0
 
-    pand xmm4, xmm1                                 // Create subtraction mask
-    psubb xmm0, xmm4                                // Subtract 32
-
-    movdqu [rdi], xmm0                              // Move back to rdi
+    movaps xmm0, [rdi + 16]
     
-    add rdi, 16
+    pxor xmm6, xmm6
+    pcmpeqb xmm6, xmm0
+    pmovmskb eax, xmm6
+    test eax, eax
+    jnz toupper_asm
+
+    movaps xmm3, xmm5
+    movaps xmm4, xmm7
+    movaps xmm1, xmm0
+
+    pcmpgtb xmm1, [rip + begin_lower]
+    pcmpgtb xmm3, xmm0
+    pand xmm1, xmm3
+    pand xmm4, xmm1
+    psubb xmm0, xmm4
+    movdqa [rdi + 16], xmm0
+
+    movaps xmm0, [rdi + 32]
+    
+    pxor xmm6, xmm6
+    pcmpeqb xmm6, xmm0
+    pmovmskb eax, xmm6
+    test eax, eax
+    jnz toupper_asm
+
+    movaps xmm3, xmm5
+    movaps xmm4, xmm7
+    movaps xmm1, xmm0
+
+    pcmpgtb xmm1, [rip + begin_lower]
+    pcmpgtb xmm3, xmm0
+    pand xmm1, xmm3
+    pand xmm4, xmm1
+    psubb xmm0, xmm4
+    movdqa [rdi + 32], xmm0
+
+    movaps xmm0, [rdi + 48]
+    
+    pxor xmm6, xmm6
+    pcmpeqb xmm6, xmm0
+    pmovmskb eax, xmm6
+    test eax, eax
+    jnz toupper_asm
+
+    movaps xmm3, xmm5
+    movaps xmm4, xmm7
+    movaps xmm1, xmm0
+
+    pcmpgtb xmm1, [rip + begin_lower]
+    pcmpgtb xmm3, xmm0
+    pand xmm1, xmm3
+    pand xmm4, xmm1
+    psubb xmm0, xmm4
+    movdqa [rdi + 48], xmm0
+
+    add rdi, 64
     jmp simd_loop
 
 toupper_asm:
+    // Process 1st character
     mov al, [rdi]
     test al, al
     je .Lend
     sub al, 'a'
     cmp al, 25
-    ja .Skip1
+    ja .Process1
     sub byte ptr [rdi], 0x20
-.Skip1:
+.Process1:
     inc rdi
-
+    // Process 2nd character
     mov al, [rdi]
     test al, al
     je .Lend
     sub al, 'a'
     cmp al, 25
-    ja .Skip2
+    ja .Process2
     sub byte ptr [rdi], 0x20
-.Skip2:
+.Process2:
     inc rdi
 
+    // Process 3rd character
     mov al, [rdi]
     test al, al
     je .Lend
     sub al, 'a'
     cmp al, 25
-    ja .Skip3
+    ja .Process3
     sub byte ptr [rdi], 0x20
-.Skip3:
+.Process3:
     inc rdi
 
+    // Process 4th character
     mov al, [rdi]
     test al, al
     je .Lend
     sub al, 'a'
     cmp al, 25
-    ja .Skip4
+    ja .Process4
     sub byte ptr [rdi], 0x20
-.Skip4:
+.Process4:
     inc rdi
 
+    // Process 5th character
     mov al, [rdi]
     test al, al
     je .Lend
     sub al, 'a'
     cmp al, 25
-    ja .Skip5
+    ja .Process5
     sub byte ptr [rdi], 0x20
-.Skip5:
+.Process5:
     inc rdi
 
+    // Process 6th character
     mov al, [rdi]
     test al, al
     je .Lend
     sub al, 'a'
     cmp al, 25
-    ja .Skip6
+    ja .Process6
     sub byte ptr [rdi], 0x20
-.Skip6:
+.Process6:
     inc rdi
 
+    // Process 7th character
     mov al, [rdi]
     test al, al
     je .Lend
     sub al, 'a'
     cmp al, 25
-    ja .Skip7
+    ja .Process7
     sub byte ptr [rdi], 0x20
-.Skip7:
+.Process7:
     inc rdi
 
+    // Process 8th character
     mov al, [rdi]
     test al, al
     je .Lend
     sub al, 'a'
     cmp al, 25
-    ja .Skip8
+    ja .Process8
     sub byte ptr [rdi], 0x20
-.Skip8:
+.Process8:
     inc rdi
 
+    // Process 9th character
+    mov al, [rdi]
+    test al, al
+    je .Lend
+    sub al, 'a'
+    cmp al, 25
+    ja .Process9
+    sub byte ptr [rdi], 0x20
+.Process9:
+    inc rdi
+
+    // Process 10th character
+    mov al, [rdi]
+    test al, al
+    je .Lend
+    sub al, 'a'
+    cmp al, 25
+    ja .Process10
+    sub byte ptr [rdi], 0x20
+.Process10:
+    inc rdi
+
+    // Process 11th character
+    mov al, [rdi]
+    test al, al
+    je .Lend
+    sub al, 'a'
+    cmp al, 25
+    ja .Process11
+    sub byte ptr [rdi], 0x20
+.Process11:
+    inc rdi
+
+    // Process 12th character
+    mov al, [rdi]
+    test al, al
+    je .Lend
+    sub al, 'a'
+    cmp al, 25
+    ja .Process12
+    sub byte ptr [rdi], 0x20
+.Process12:
+    inc rdi
+
+    // Process 13th character
+    mov al, [rdi]
+    test al, al
+    je .Lend
+    sub al, 'a'
+    cmp al, 25
+    ja .Process13
+    sub byte ptr [rdi], 0x20
+.Process13:
+    inc rdi
+
+    // Process 14th character
+    mov al, [rdi]
+    test al, al
+    je .Lend
+    sub al, 'a'
+    cmp al, 25
+    ja .Process14
+    sub byte ptr [rdi], 0x20
+.Process14:
+    inc rdi
+
+    // Process 15th character
+    mov al, [rdi]
+    test al, al
+    je .Lend
+    sub al, 'a'
+    cmp al, 25
+    ja .Process15
+    sub byte ptr [rdi], 0x20
+.Process15:
+    inc rdi
+
+    // Repeat unrolled loop
     jmp toupper_asm
-
 .Lend:
     ret            
