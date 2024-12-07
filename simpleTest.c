@@ -2,6 +2,7 @@
 #include <stdlib.h> // For malloc and free
 #include <stdint.h> // For uintptr_t
 extern void toupper_simd(char *str);
+//extern void toupper_avx(char *str);
 
 int main() {
     // Allocate memory dynamically, ensuring sufficient space for unalignment
@@ -33,6 +34,14 @@ int main() {
     printf("  Before: %s\n", str);
     toupper_simd(str); // Pass the aligned
     printf("  After: %s\n", str);   
+
+    // Test the AVX implementation
+    char str_avx[] = "Hey buddy, a key reason you might not be seeing the loop progress beyond the first 16 characters";
+    //printf("Aligned address (AVX):\n");
+    //printf("  Before: %s\n", str_avx);
+    //toupper_avx(str_avx); // Pass the aligned
+    //printf("  After: %s\n", str_avx);
+
 
     // Free the original allocated memory (use the base pointer)
     free(original_memory);
