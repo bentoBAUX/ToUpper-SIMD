@@ -2,7 +2,7 @@
 extern void toupper_simd(char *str);
 
 int main() {
-    char str[] = "Hey buddy, a key reason you might not be seeing the loop progress beyond the first 16 characters";
+    char str[] = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. ";
 
     printf("Before: %s\n", str);
     toupper_simd(str); 
