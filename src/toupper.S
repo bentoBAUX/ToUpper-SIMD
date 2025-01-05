@@ -56,17 +56,16 @@ simd_loop:
     add rdi, 16
     jmp simd_loop
 
-toupper_asm:
-    mov al, [rdi]
-    cmp al, 'a'
-    jl  next
-    cmp al, 'z'
-    jg  next
-    and al, 0xDF
-    mov byte ptr [rdi], al
-next:
+.toupper_asm:
+    mov al,[rdi]
+    cmp al,0                    // Branch to return if char is '\0'
+    je .end
+    sub al,'a'                  // Make 'a' => 0, 'b' => 1, ..., 'z' => 25.
+    cmp al,25                   // Branch to cont if al is unsigned > 25.
+    ja .cont                    // "Jump above", unsigned equivalent to jg
+    sub byte ptr [rdi],0x20     // Transform letter to upper case
+.cont:
     inc rdi
-    cmp byte ptr [rdi], 0x00    
-    jnz toupper_asm 
+    jmp .toupper_asm
 .end:
     ret
